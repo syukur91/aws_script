@@ -1,48 +1,50 @@
 # Dependency defintition
-import boto3, pprint, json, csv
+import boto3, pprint, json, csv, os
 
-# Variable definition
-data = {}
-pretty_print = pprint.PrettyPrinter(indent=4)
-csv_header = ['Region','Instance ID','Instance Type','Instance State','Launch Time','Vpc ID','Image ID','Subnet ID','Public IP Address','Private IP Address','Availability Zone', 'Tag', 'Volume AZ', 'Volume ID', 'Volume Size', 'Volume State', 'Volume Type', 'Volume Status', "Volume Device Name"]
-ec2_client = boto3.client('ec2')
+# Setup & Variable definition
+aws_profile     = os.environ.get('AWS_PROFILE', 'default')
+boto3.setup_default_session(profile_name=aws_profile)
+data            = {}
+pretty_print    = pprint.PrettyPrinter(indent=4)
+csv_header      = ['Region','Instance ID','Instance Type','Instance State','Launch Time','Vpc ID','Image ID','Subnet ID','Public IP Address','Private IP Address','Availability Zone', 'Tag', 'Volume AZ', 'Volume ID', 'Volume Size', 'Volume State', 'Volume Type', 'Volume Status', "Volume Device Name"]
+ec2_client      = boto3.client('ec2')
+regions         = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
 
-# Get all the region
-regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+print("Script running using profile: "+aws_profile)
 
 # Loop through all region
 for region in regions:
     print("Scanning for region: "+region)
-    client = boto3.client('ec2', region_name=region)
-    response = client.describe_instances()
-    ec2_data = response["Reservations"]
+    client      = boto3.client('ec2', region_name=region)
+    response    = client.describe_instances()
+    ec2_data    = response["Reservations"]
 
     # Get instance details
     if ec2_data:
         print("    Getting ec2 instance details for region: "+region)
         for reservation in ec2_data:
             for instance in reservation["Instances"]:
-                instance_dict = {}
-                volume_ids = ""
-                volume_status = ""
-                volume_device_name = ""
-                tags = ""
+                instance_dict       = {}
+                volume_ids          = ""
+                volume_status       = ""
+                volume_device_name  = ""
+                tags                = ""
 
                 # This handle if the block device mapping list is more than one item
                 for volume in instance["BlockDeviceMappings"]:
-                    volume_ids        +=  volume["Ebs"]["VolumeId"]  + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["Ebs"]["VolumeId"]
+                    volume_ids          +=  volume["Ebs"]["VolumeId"]  + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["Ebs"]["VolumeId"]
                 for volume in instance["BlockDeviceMappings"]:
-                    volume_status     +=  volume["Ebs"]["Status"]  + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["Ebs"]["Status"]
+                    volume_status       +=  volume["Ebs"]["Status"]  + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["Ebs"]["Status"]
                 for volume in instance["BlockDeviceMappings"]:
-                    volume_device_name +=  volume["DeviceName"] + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["DeviceName"] 
+                    volume_device_name  +=  volume["DeviceName"] + ":" if len(instance["BlockDeviceMappings"]) > 1 else volume["DeviceName"] 
                
 
                 # Checking if the tag is exist or not               
                 if instance.get("Tags", "none") != "none":
                     for tag in instance["Tags"]:
-                        tags +=  tag["Key"]+":"+tag["Value"] + ";" 
+                        tags    +=  tag["Key"]+":"+tag["Value"] + ";" 
                 else:
-                    tags = "tag doesn't exist"  
+                        tags     = "tag doesn't exist"  
 
                 # Assign the value to generic dictionary
                 instance_dict["Instance"] = { 
@@ -65,14 +67,14 @@ for region in regions:
 
 
     # Get additional volume details
-    volumes = client.describe_volumes()
+    volumes     = client.describe_volumes()
     volume_data = volumes["Volumes"]
     if volume_data:
         for volume in volumes["Volumes"]:
             volume_dict = {}
 
             # Assign the value to generic dictionary
-            volume_dict["Volume"]  =  { "VolumeID"          : volume["VolumeId"], 
+            volume_dict["Volume"]  =  { 
                                         "VolumeType"        : volume["VolumeType"],
                                         "VolumeState"       : volume["State"],
                                         "VolumeAZ"          : volume["AvailabilityZone"],

@@ -18,7 +18,7 @@ source env/bin/activate
 
 pip install -r requirements.txt
 
-python 01_ec2_list.py
+export AWS_PROFILE=default && python 01_ec2_list.py // Enable switch profile using AWS_PROFILE environment variable
 ```
 
 P.S. `I made an alias on bash for python3 so that can be called as python`
