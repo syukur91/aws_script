@@ -72,8 +72,8 @@ for region in regions:
     if volume_data:
         for volume in volumes["Volumes"]:
             volume_dict = {}
-            instance_id = volume["Attachments"][0]["InstanceId"]
-            if instance_id != '':
+            instance_id = volume.get('Attachments', {})[0].get('InstanceId', 'N/A')
+            if instance_id != 'N/A':
                 # Assign the value to generic dictionary
                 volume_dict["Volume"]  =  { 
                                             "VolumeType"        : volume.get('VolumeType','N/A'),
