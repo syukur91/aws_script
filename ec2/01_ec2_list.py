@@ -49,7 +49,7 @@ for region in regions:
                 # Assign the value to generic dictionary
                 instance_dict["Instance"] = { 
                                               "Region"              : region,
-                                              "InstanceType"        : instance["InstanceType"],
+                                              "InstanceType"        : instance.get('InstanceType','N/A'),
                                               "InstanceID"          : instance.get('InstanceId','N/A'),
                                               "InstanceState"       : instance.get('State', {}).get('Name', 'N/A'),
                                               "LaunchTime"          : instance.get('LaunchTime','N/A'),
