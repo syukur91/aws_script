@@ -51,14 +51,14 @@ for region in regions:
                                               "Region"              : region,
                                               "InstanceType"        : instance["InstanceType"],
                                               "InstanceID"          : instance.get('InstanceId','N/A'),
-                                              "InstanceState"       : instance["State"]["Name"],
+                                              "InstanceState"       : instance.get('State', {}).get('Name', 'N/A'),
                                               "LaunchTime"          : instance.get('LaunchTime','N/A'),
                                               "VpcId"               : instance.get('VpcId','N/A'),
                                               "ImageId"             : instance.get('ImageId','N/A'),
                                               "SubnetId"            : instance.get('SubnetId','N/A'),
-                                              "PublicIpAddress"     : instance.get('PublicIpAddresss','N/A'),
+                                              "PublicIpAddress"     : instance.get('PublicIpAddress','N/A'),
                                               "PrivateIpAddress"    : instance.get('PrivateIpAddress','N/A'),                                       
-                                              "AvailabilityZone"    : instance["Placement"]["AvailabilityZone"],                                           
+                                              "AvailabilityZone"    : instance.get('Placement', {}).get('AvailabilityZone', 'N/A'),                                           
                                               "VolumeID"            : volume_ids,
                                               "VolumeStatus"        : volume_status,
                                               "VolumeDeviceName"    : volume_device_name,
@@ -72,15 +72,16 @@ for region in regions:
     if volume_data:
         for volume in volumes["Volumes"]:
             volume_dict = {}
+            instance_id = volume["Attachments"][0]["InstanceId"]
+            if instance_id != '':
+                # Assign the value to generic dictionary
+                volume_dict["Volume"]  =  { 
+                                            "VolumeType"        : volume.get('VolumeType','N/A'),
+                                            "VolumeState"       : volume.get('State','N/A'),
+                                            "VolumeAZ"          : volume.get('AvailabilityZone','N/A'),
+                                            "VolumeSize"        : volume.get('Size','N/A') } 
 
-            # Assign the value to generic dictionary
-            volume_dict["Volume"]  =  { 
-                                        "VolumeType"        : volume["VolumeType"],
-                                        "VolumeState"       : volume["State"],
-                                        "VolumeAZ"          : volume["AvailabilityZone"],
-                                        "VolumeSize"        : volume["Size"] } 
-
-            data[volume["Attachments"][0]["InstanceId"]].update(volume_dict) 
+                data[instance_id].update(volume_dict) 
 
 
 
@@ -91,25 +92,26 @@ with open('instance.csv', 'w', newline='') as file:
     for a in data:
         # Put all the value to the writer based on header sequence
         writer.writerow([
-                         data[a]["Instance"]["Region"], 
-                         data[a]["Instance"]["InstanceID"], 
-                         data[a]["Instance"]["InstanceType"], 
-                         data[a]["Instance"]["InstanceState"], 
-                         data[a]["Instance"]["LaunchTime"], 
-                         data[a]["Instance"]["VpcId"], 
-                         data[a]["Instance"]["ImageId"], 
-                         data[a]["Instance"]["SubnetId"], 
-                         data[a]["Instance"]["PublicIpAddress"], 
-                         data[a]["Instance"]["PrivateIpAddress"], 
-                         data[a]["Instance"]["AvailabilityZone"], 
-                         data[a]["Instance"]["Tag"], 
-                         data[a]["Volume"]["VolumeAZ"], 
-                         data[a]["Instance"]["VolumeID"],
-                         data[a]["Volume"]["VolumeSize"],
-                         data[a]["Volume"]["VolumeState"],
-                         data[a]["Volume"]["VolumeType"],
-                         data[a]["Instance"]["VolumeStatus"],
-                         data[a]["Instance"]["VolumeDeviceName"]])
+                         data[a].get('Instance', {}).get('Region', 'N/A'),
+                         data[a].get('Instance', {}).get('InstanceID', 'N/A'),
+                         data[a].get('Instance', {}).get('InstanceType', 'N/A'),
+                         data[a].get('Instance', {}).get('InstanceState', 'N/A'),
+                         data[a].get('Instance', {}).get('LaunchTime', 'N/A'),
+                         data[a].get('Instance', {}).get('VpcId', 'N/A'),
+                         data[a].get('Instance', {}).get('ImageId', 'N/A'),
+                         data[a].get('Instance', {}).get('SubnetId', 'N/A'),
+                         data[a].get('Instance', {}).get('PublicIpAddress', 'N/A'),
+                         data[a].get('Instance', {}).get('PrivateIpAddress', 'N/A'),
+                         data[a].get('Instance', {}).get('AvailabilityZone', 'N/A'),
+                         data[a].get('Instance', {}).get('Tag', 'N/A'),
+                         data[a].get('Volume', {}).get('VolumeAZ', 'N/A'),   
+                         data[a].get('Instance', {}).get('VolumeID', 'N/A'),   
+                         data[a].get('Volume', {}).get('VolumeSize', 'N/A'),   
+                         data[a].get('Volume', {}).get('VolumeState', 'N/A'),
+                         data[a].get('Volume', {}).get('VolumeType', 'N/A'),
+                         data[a].get('Instance', {}).get('VolumeStatus', 'N/A'),
+                         data[a].get('Instance', {}).get('VolumeDeviceName', 'N/A')
+                         ])
 
 print("")
 print("Scanning completed")
